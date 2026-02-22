@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Spesial Gift Buat Kamu 💞</title>
+    <style>
+        :root {
+            --primary: #ff4fa3;
+            --secondary: #ff9ecf;
+            --accent: #ffd166;
+            --white: #ffffff;
+            --shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #ff9ecf, #ffc3a0);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-align: center;
+            color: var(--white);
+            overflow: hidden;
+        }
+
+        /* Canvas untuk partikel */
+        #heartCanvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .container {
+            z-index: 2;
+            width: 90%;
+            max-width: 450px;
+            padding: 20px;
+        }
+
+        .halaman {
+            display: none;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 40px 25px;
+            border-radius: 30px;
+            box-shadow: var(--shadow);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            animation: slideUp 0.6s ease-out forwards;
+        }
+
+        @keyframes slideUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .aktif {
+            display: block;
+        }
+
+        h2 { margin-bottom: 10px; font-size: 2rem; }
+        p { font-size: 1.1rem; line-height: 1.5; opacity: 0.9; }
+
+        button {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            background: var(--white);
+            color: var(--primary);
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 79, 163, 0.3);
+            margin-top: 20px;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            background: var(--primary);
+            color: var(--white);
+        }
+
+        /* MEMORY GAME */
+        .kartu-container {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin: 25px 0;
+        }
+
+        .card {
+            aspect-ratio: 1/1;
+            background: var(--white);
+            color: var(--primary);
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: transform 0.3s;
+            user-select: none;
+        }
+
+        .card.hidden {
+            background: var(--primary);
+            color: var(--primary);
+            transform: rotateY(0deg);
+        }
+
+        .card:not(.hidden) {
+            transform: rotateY(180deg);
+        }
+
+        /* CAKE SECTION */
+        .kue-wrapper {
+            position: relative;
+            font-size: 100px;
+            margin: 30px 0;
+            display: inline-block;
+        }
+
+        .smoke {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            opacity: 0;
+            font-size: 30px;
+        }
+
+        .blown .smoke {
+            animation: smokeUp 2s ease-out forwards;
+        }
+
+        @keyframes smokeUp {
+            0% { opacity: 1; transform: translate(-50%, 0); }
+            100% { opacity: 0; transform: translate(-50%, -50px); }
+        }
+
+        /* TEXT ANIMATION */
+        .fade-in {
+            opacity: 0;
+            animation: fadeIn 1.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            to { opacity: 1; }
+        }
+
+        .delay-1 { animation-delay: 0.5s; }
+        .delay-2 { animation-delay: 1.5s; }
+        .delay-3 { animation-delay: 2.5s; }
+        .delay-4 { animation-delay: 4s; }
+
+    </style>
+</head>
+<body>
+
+<canvas id="heartCanvas"></canvas>
+
+<div class="container">
+    <audio id="musik" loop>
+        <source src="song.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- HALAMAN 1: WELCOME -->
+    <div id="hal1" class="halaman aktif">
+        <h2>Alooo Kamu! ✨</h2>
+        <p>Aku punya kejutan kecil buat nemenin hari spesialmu 🎁</p>
+        <button onclick="mulai()">Buka Sekarang 💌</button>
+    </div>
+
+    <!-- HALAMAN 2: MINI GAME -->
+    <div id="hal2" class="halaman">
+        <h2>Uji Keberuntungan 🧩</h2>
+        <p>Temukan 6 pasang hadiah yang sama ya!</p>
+        <div id="board" class="kartu-container"></div>
+        <p id="status" style="font-weight: bold;"></p>
+        <button id="lanjutBtn" style="display:none" onclick="keHal(3)">Lanjut 💖</button>
+    </div>
+
+    <!-- HALAMAN 3: WISH -->
+    <div id="hal3" class="halaman">
+        <h2>Make a Wish 🎂</h2>
+        <div id="kue-container" class="kue-wrapper">
+            <span class="smoke">💨</span>
+            <span id="kue-emoji">🎂</span>
+        </div>
+        <p>Tutup matamu, buat satu permintaan dalam hati, lalu klik tiup lilinnya...</p>
+        <button id="btnTiup" onclick="tiup()">Tiup Lilin 🌬️</button>
+    </div>
+
+    <!-- HALAMAN 4: MESSAGE -->
+    <div id="hal4" class="halaman">
+        <h2 class="fade-in">Happy Birthday! 🥳</h2>
+        <p class="fade-in delay-1">
+            Happy Birthday Shafrya Nur Febrianty🎂💛</p>
+        <p class="fade-in delay-1">
+            Semoga di umur yang baru ini kamu selalu sehat, bahagia, dan semua yang kamu doakan pelan-pelan terkabul. Terima kasih sudah jadi teman yang selalu ada dan nggak pernah bikin hari terasa sepi.</p>
+        <p class="fade-in delay-2" style="font-style: italic; font-size: 0.9rem;">
+            Aku harap hari ini penuh dengan kejutan manis, tawa, dan momen-momen indah yang bisa kamu kenang. Jangan lupa untuk selalu bersyukur atas setiap berkat yang datang dan terus kejar semua mimpi-mimpimu dengan semangat yang nggak pernah padam!
+        </p>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById('heartCanvas');
+    const ctx = canvas.getContext('2d');
+    const musik = document.getElementById('musik');
+    const pages = document.querySelectorAll('.halaman');
+
+    // Resize Canvas
+    function resize() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // Heart Particles
+    let hearts = [];
+    class Heart {
+        constructor() {
+            this.reset();
+        }
+        reset() {
+            this.x = Math.random() * canvas.width;
+            this.y = canvas.height + 100;
+            this.size = Math.random() * 15 + 10;
+            this.speed = Math.random() * 2 + 1;
+            this.opacity = Math.random() * 0.5 + 0.3;
+            this.text = ['❤️', '💖', '✨', '🌸'][Math.floor(Math.random() * 4)];
+        }
+        update() {
+            this.y -= this.speed;
+            if (this.y < -50) this.reset();
+        }
+        draw() {
+            ctx.globalAlpha = this.opacity;
+            ctx.font = `${this.size}px serif`;
+            ctx.fillText(this.text, this.x, this.y);
+        }
+    }
+
+    function initParticles() {
+        for(let i=0; i<20; i++) hearts.push(new Heart());
+    }
+
+    function animate() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        hearts.forEach(h => {
+            h.update();
+            h.draw();
+        });
+        requestAnimationFrame(animate);
+    }
+    initParticles();
+    animate();
+
+    // Logic Halaman
+    function keHal(n) {
+        pages.forEach(p => p.classList.remove('aktif'));
+        document.getElementById('hal' + n).classList.add('aktif');
+    }
+
+    function mulai() {
+        musik.play().catch(() => {
+            console.log("Autoplay dicegah, klik manual diperlukan");
+        });
+        keHal(2);
+        buatGame();
+    }
+
+    // Memory Game Logic
+    const icons = ['🎁','🎉','💘','🌺','🥳','💝'];
+    let kartuData = [...icons, ...icons];
+    let selected = [];
+    let matches = 0;
+    let lock = false;
+
+    function buatGame() {
+        const board = document.getElementById('board');
+        board.innerHTML = '';
+        kartuData.sort(() => Math.random() - 0.5);
+
+        kartuData.forEach((icon, index) => {
+            const card = document.createElement('div');
+            card.className = 'card hidden';
+            card.dataset.icon = icon;
+            card.onclick = () => flipCard(card);
+            board.appendChild(card);
+        });
+    }
+
+    function flipCard(card) {
+        if (lock || !card.classList.contains('hidden') || selected.length >= 2) return;
+
+        card.classList.remove('hidden');
+        card.textContent = card.dataset.icon;
+        selected.push(card);
+
+        if (selected.length === 2) {
+            lock = true;
+            if (selected[0].dataset.icon === selected[1].dataset.icon) {
+                matches++;
+                selected = [];
+                lock = false;
+                if (matches === icons.length) {
+                    document.getElementById('status').innerText = "Keren! Kamu menang! 💖";
+                    document.getElementById('lanjutBtn').style.display = 'inline-block';
+                }
+            } else {
+                setTimeout(() => {
+                    selected.forEach(c => {
+                        c.classList.add('hidden');
+                        c.textContent = '';
+                    });
+                    selected = [];
+                    lock = false;
+                }, 800);
+            }
+        }
+    }
+
+    // Tiup Lilin Logic
+    function tiup() {
+        const wrapper = document.getElementById('kue-container');
+        const emoji = document.getElementById('kue-emoji');
+        const btn = document.getElementById('btnTiup');
+        
+        wrapper.classList.add('blown');
+        emoji.innerText = "🍰"; // Kue berubah jadi potongan
+        btn.style.display = "none";
+        
+        setTimeout(() => {
+            keHal(4);
+        }, 2000);
+    }
+</script>
+
+</body>
+</html>
